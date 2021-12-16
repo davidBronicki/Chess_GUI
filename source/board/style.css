@@ -1,0 +1,13 @@
+#board_grid {
+	/* margin: auto; */
+	display: grid;
+	overflow: hidden;
+	grid-template-columns: 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
+	grid-template-rows: 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
+}
+
+#board_container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}

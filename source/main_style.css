@@ -1,0 +1,36 @@
+html, body, div, iframe, h1, p {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+}
+
+html, body, iframe {
+	height: 100%;
+	width: 100%;
+}
+
+.mainTheme {
+	background-color: #222;
+	color: white;
+}
+
+.emphTheme1 {
+	background-color: #282830;
+	color: white;
+}
+
+.emphTheme2 {
+	background-color: #334;
+	color: white;
+}
+
+.offTheme1 {
+	background-color: #333;
+	color: white;
+}
+
+.offTheme2 {
+	background-color: #282828;
+	color: white;
+}

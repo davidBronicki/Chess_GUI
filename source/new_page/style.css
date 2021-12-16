@@ -1,0 +1,7 @@
+#new_page_button {
+	display: inline-block;
+	padding: 20px;
+	margin: 8px;
+	clear: left;
+	cursor: pointer;
+}
