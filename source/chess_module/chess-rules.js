@@ -9,9 +9,14 @@ function ati(index){
 	return boardDefs.alg_to_index[index]
 }
 
+// function _modifyCastleRight
+
 class Board {
 	constructor(fenString, copyThis){
 		fenString ??= undefined
+		if (fenString === "startpos"){
+			fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+		}
 		if (fenString != undefined){
 			let splitFenString = fenString.split(" ")
 			this.pieces = Array(64)
@@ -121,6 +126,21 @@ class Board {
 		return output
 	}
 
+	equivalentPositions(otherBoard){
+		for (let i = 0; i < 64; ++i){
+			if (this.pieces[i] !== otherBoard.pieceKey[i]){
+				return false
+			}
+		}
+
+		return (this.blackToPlay === otherBoard.blackToPlay &&
+			this.blackLong === otherBoard.blackLong &&
+			this.blackShort === otherBoard.blackShort &&
+			this.whiteLong === otherBoard.whiteLong &&
+			this.whiteShort === otherBoard.whiteShort &&
+			this.enPassantSquare === otherBoard.enPassantSquare)
+	}
+
 	_modifyCastleRight(move, attributeString){
 		if (castleSquares[attributeString].includes(move.startSquare) ||
 			castleSquares[attributeString].includes(move.endSquare)){
@@ -141,24 +161,24 @@ class Board {
 	}
 
 	_whitePromoting(move){
-		return this.pieces[move.startSquare] === 'p' &&
-		Math.floor(move.startSquare / 8) === 1
-	}
-
-	_blackPromoting(move){
 		return this.pieces[move.startSquare] === 'P' &&
 		Math.floor(move.startSquare / 8) === 6
 	}
 
+	_blackPromoting(move){
+		return this.pieces[move.startSquare] === 'p' &&
+		Math.floor(move.startSquare / 8) === 1
+	}
+
 	_whiteEnPassanting(move){
 		return this.pieces[move.startSquare] === 'P' &&//pawn move
-		move.startSquare - move.endSquare % 2 != 0 &&//capture move
+		(move.startSquare - move.endSquare) % 2 !== 0 &&//capture move
 		this.pieces[move.endSquare] === '_'//no piece at target
 	}
 
 	_blackEnPassanting(move){
 		return this.pieces[move.startSquare] === 'p' &&//pawn move
-		move.startSquare - move.endSquare % 2 != 0 &&//capture move
+		(move.startSquare - move.endSquare) % 2 !== 0 &&//capture move
 		this.pieces[move.endSquare] === '_'//no piece at target
 	}
 
@@ -458,6 +478,7 @@ class Board {
 		let promotionRank = isBlack ? 1 : 6
 		let enPassantRank = isBlack ? 3 : 4
 		let rank = Math.floor(index / 8)
+		let file = index % 8
 		if (!occupied(index + pawnIncrement)){
 			if (rank === promotionRank){
 				moves.push(...promotionMoveSuite(index, index + pawnIncrement))
@@ -469,14 +490,14 @@ class Board {
 			}
 		}
 
-		if (index % 8 !== 7 && occupied(index + pawnIncrement + 1) && !friendly(index + pawnIncrement + 1)){
+		if (file !== 7 && occupied(index + pawnIncrement + 1) && !friendly(index + pawnIncrement + 1)){
 			if (rank === promotionRank){
 				moves.push(...promotionMoveSuite(index, index + pawnIncrement + 1))
 			} else{
 				moves.push(new Move(index, index + pawnIncrement + 1))
 			}
 		}
-		if (index % 8 !== 0 && occupied(index + pawnIncrement - 1) && !friendly(index + pawnIncrement - 1)){
+		if (file !== 0 && occupied(index + pawnIncrement - 1) && !friendly(index + pawnIncrement - 1)){
 			if (rank === promotionRank){
 				moves.push(...promotionMoveSuite(index, index + pawnIncrement - 1))
 			} else{
@@ -532,7 +553,7 @@ class Board {
 			if (this.blackShort &&
 			this.pieces[ati('f8')] === '_' &&
 			this.pieces[ati('g8')] === '_'){
-				moves.push(new Move(ati('e8'), ati('h8')))
+				moves.push(new Move(ati('e8'), ati('g8')))
 			}
 			if (this.blackLong &&
 			this.pieces[ati('d8')] === '_' &&
@@ -544,7 +565,7 @@ class Board {
 			if (this.whiteShort &&
 			this.pieces[ati('f1')] === '_' &&
 			this.pieces[ati('g1')] === '_'){
-				moves.push(new Move(ati('e1'), ati('h1')))
+				moves.push(new Move(ati('e1'), ati('g1')))
 			}
 			if (this.whiteLong &&
 			this.pieces[ati('d1')] === '_' &&
@@ -746,11 +767,38 @@ class Move{
 
 class ChessGame {
 	constructor(fenString="startpos"){
-		if (fenString === "startpos"){
-			fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-		}
 		this.boardStateList = [new Board(fenString)]
 		this.moves = this.boardStateList[0].generateLegalMoves()
+	}
+
+	adjudicateMove(move){
+		return "legal"
+	}
+
+	adjudicatePosition(){
+		if (this.boardStateList.at(-1).plySinceCaptureOrPawnMove === 100){
+			return "draw 50"
+		}
+		if (this.moves.length === 0){
+			if (this.boardStateList.at(-1)._inCheck()){
+				return this.boardStateList.at(-1).blackToPlay ?
+					"white wins" :
+					"black wins"
+			}
+			return "draw stalemate"
+		}
+		repetitionCount = 0
+		for (let i = this.boardStateList.length;
+			i >= Math.max(0, this.boardStateList.length - this.boardStateList.at(-1).plySinceCaptureOrPawnMove);
+			--i){
+			if (this.boardStateList[i].equivalentPositions(this.boardStateList.at(-1))){
+				++repetitionCount;
+			}
+		}
+		if (repetitionCount >= 3){
+			return "draw repetition"
+		}
+		return "good"
 	}
 
 	performMove(move, force = false){
