@@ -1,6 +1,36 @@
 const {app, BrowserWindow, ipcMain, nativeTheme} = require('electron')
 const path = require('path')
 
+const chess = require('./chess_module/chess-rules.js')
+
+const makeChessHandles = () => {
+	ipcMain.handle('board:blank', () => {
+		return chess.ChessGame('8/8/8/8/8/8/8/8 w KQkq - 0 1')
+	})
+
+	ipcMain.handle('board:start', () => {
+		return chess.ChessGame('startpos')
+	})
+
+	ipcMain.handle('board:parse', (fen) => {
+		return chess.ChessGame(fen)
+	})
+
+	ipcMain.handle('board:move', (start, end) => {
+		return chess.Move(start, end)
+	})
+
+	ipcMain.handle('board:promo', (move, promotionRule) => {
+		return chess.Move(move.start, move.end, promotionRule)
+	})
+}
+
+const makeLogHandle = () => {
+	ipcMain.handle('log', (message) => {
+		console.log(message)
+	})
+}
+
 const createWindow = () => {
 	const win = new BrowserWindow({
 		width: 1280,
@@ -10,20 +40,10 @@ const createWindow = () => {
 		}
 	})
 
-	win.loadFile('main/index.html')
+	makeChessHandles()
+	makeLogHandle()
 
-	// ipcMain.handle('dark-mode:toggle', () => {
-	//   if (nativeTheme.shouldUseDarkColors) {
-	// 	nativeTheme.themeSource = 'light'
-	//   } else {
-	// 	nativeTheme.themeSource = 'dark'
-	//   }
-	//   return nativeTheme.shouldUseDarkColors
-	// })
-  
-	// ipcMain.handle('dark-mode:system', () => {
-	//   nativeTheme.themeSource = 'system'
-	// })
+	win.loadFile('main/index.html')
 }
 
 app.whenReady().then(() => {

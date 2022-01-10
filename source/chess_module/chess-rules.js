@@ -832,6 +832,13 @@ class ChessGame {
 	getBoardState(){
 		return this.boardStateList.at(-1)
 	}
+
+	getPieceAt(square){
+		if (typeof square !== 'number'){
+			square = ati(square)
+		}
+		return this.boardStateList.at(-1).pieces[square]
+	}
 }
 
 module.exports = {
