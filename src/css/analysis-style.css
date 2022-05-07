@@ -1,18 +1,19 @@
-#main_grid{
+
+#analysis-grid {
 	display: grid;
 	overflow: hidden;
 	grid-template-columns: auto 250px;
 	grid-template-rows: auto 150px;
 }
 
-#board {
+#board-space {
 	grid-area: 1 / 1 / 2 / 2;
 }
 
-#moves {
+#board-status {
 	grid-area: 1 / 2 / 2 / 3;
 }
 
-#analysis{
+#board-analysis {
 	grid-area: 2 / 1 / 3 / 3;
 }

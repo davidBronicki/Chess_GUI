@@ -1,4 +1,4 @@
-const chessRules = require("./chess-rules")
+import {Board, Move, ChessGame} from './chess-rules'
 
 test("move generation test", () => {
 	expect(genMoves()).toEqual(expectedMoves())
@@ -18,9 +18,9 @@ test("Game stack handling", () => {
 
 function genMoves(){
 	return [
-		new chessRules.Move(4, 8),
-		new chessRules.Move(4, 8, 'B'),
-		new chessRules.Move("e1", "a2")
+		new Move(4, 8),
+		new Move(4, 8, 'B'),
+		new Move("e1", "a2")
 	]
 }
 
@@ -45,20 +45,20 @@ function expectedMoves(){
 }
 
 function genBoardCore(){
-	let startBoard = new chessRules.Board("startpos")
+	let startBoard = new Board("startpos")
 
-	let promotionReadyBoard = new chessRules.Board("rnbq1bnr/pp1kpPpp/2p5/3p4/8/8/PPPP1PPP/RNBQKBNR w KQ - 1 5")
-	let promotingMove = new chessRules.Move('f7', 'g8', 'Q')
+	let promotionReadyBoard = new Board("rnbq1bnr/pp1kpPpp/2p5/3p4/8/8/PPPP1PPP/RNBQKBNR w KQ - 1 5")
+	let promotingMove = new Move('f7', 'g8', 'Q')
 	promotionReadyBoard.performMove(promotingMove)
 	let whitePromotedFen = promotionReadyBoard.toFen()
 
-	promotionReadyBoard = new chessRules.Board("rnbqkbnr/pppp1ppp/8/8/6PP/3P4/PPPKPp2/RNBQ1BNR b kq - 1 5")
-	promotingMove = new chessRules.Move('f2', 'g1', 'Q')
+	promotionReadyBoard = new Board("rnbqkbnr/pppp1ppp/8/8/6PP/3P4/PPPKPp2/RNBQ1BNR b kq - 1 5")
+	promotingMove = new Move('f2', 'g1', 'Q')
 	promotionReadyBoard.performMove(promotingMove)
 	let blackPromotedFen = promotionReadyBoard.toFen()
 	return [
 		startBoard,
-		new chessRules.Board(undefined, startBoard),
+		new Board(undefined, startBoard),
 		startBoard.toFen(),
 		whitePromotedFen,
 		blackPromotedFen
@@ -99,17 +99,17 @@ function expectedBoardCore(){
 }
 
 function genBoardLogic(){
-	let output = {}
+	let output: any = {}
 
-	let startBoard = new chessRules.Board("startpos")
+	let startBoard = new Board("startpos")
 
-	let jumpMove = new chessRules.Move('e2', 'e4')
+	let jumpMove = new Move('e2', 'e4')
 
 	output.jumpTrue1 = startBoard._pawnJump(jumpMove)
 	output.pawnMoveTrue = startBoard._pawnJump(jumpMove)
 
-	let nonJumpMove1 = new chessRules.Move('b1', 'c3')
-	let nonJumpMove2 = new chessRules.Move('e2', 'e3')
+	let nonJumpMove1 = new Move('b1', 'c3')
+	let nonJumpMove2 = new Move('e2', 'e3')
 
 	output.jumpFalse1 = startBoard._pawnJump(nonJumpMove1)
 	output.pawnCaptureMoveFalse = startBoard._pawnOrCaptureMove(nonJumpMove1)
@@ -120,61 +120,61 @@ function genBoardLogic(){
 
 	startBoard.performMove(jumpMove)
 
-	jumpMove = new chessRules.Move('e7', 'e5')
+	jumpMove = new Move('e7', 'e5')
 
 	output.jumpTrue2 = startBoard._pawnJump(jumpMove)
 	output.blackEnPassantingFalse2 = startBoard._blackEnPassanting(jumpMove)
 
-	let enPassantReadyBoard = new chessRules.Board("rnbqkbnr/ppp1ppp1/7p/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3")
+	let enPassantReadyBoard = new Board("rnbqkbnr/ppp1ppp1/7p/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3")
 
-	let enPassantMove = new chessRules.Move('e5', 'd6')
+	let enPassantMove = new Move('e5', 'd6')
 
 	output.whiteEnPassantingTrue = enPassantReadyBoard._whiteEnPassanting(enPassantMove)
 
-	let kingMove = new chessRules.Move('e1', 'e2')
+	let kingMove = new Move('e1', 'e2')
 
 	output.movingWhiteKingTrue = enPassantReadyBoard._movingWhiteKingFromStartPos(kingMove)
 	output.movingWhiteKingFalse = enPassantReadyBoard._movingWhiteKingFromStartPos(enPassantMove)
 	output.movingBlackKingFalse1 = enPassantReadyBoard._movingBlackKingFromStartPos(enPassantMove)
 
-	enPassantReadyBoard = new chessRules.Board("rnbqkbnr/ppp1pppp/8/8/3p4/5N1P/PPPPPPP1/RNBQKB1R w KQkq - 0 3")
+	enPassantReadyBoard = new Board("rnbqkbnr/ppp1pppp/8/8/3p4/5N1P/PPPPPPP1/RNBQKB1R w KQkq - 0 3")
 	let captureReadyBoard = enPassantReadyBoard.copy()
-	enPassantReadyBoard.performMove(new chessRules.Move('e2', 'e4'))
+	enPassantReadyBoard.performMove(new Move('e2', 'e4'))
 
-	enPassantMove = new chessRules.Move('d4', 'e3')
-	captureMove = new chessRules.Move('f3', 'd4')
+	enPassantMove = new Move('d4', 'e3')
+	let captureMove = new Move('f3', 'd4')
 
 	output.blackEnPassantingTrue = enPassantReadyBoard._blackEnPassanting(enPassantMove)
 	output.captureTrue = captureReadyBoard._pawnOrCaptureMove(captureMove)
 
-	kingMove = new chessRules.Move('e8', 'd7')
+	kingMove = new Move('e8', 'd7')
 
 	output.movingBlackKingTrue = enPassantReadyBoard._movingBlackKingFromStartPos(kingMove)
 	output.movingBlackKingFalse2 = captureReadyBoard._movingBlackKingFromStartPos(captureMove)
 
-	let promotionReadyBoard = new chessRules.Board("rnbq1bnr/pp1kpPpp/2p5/3p4/8/8/PPPP1PPP/RNBQKBNR w KQ - 1 5")
-	let promotingMove = new chessRules.Move('f7', 'g8', 'Q')
+	let promotionReadyBoard = new Board("rnbq1bnr/pp1kpPpp/2p5/3p4/8/8/PPPP1PPP/RNBQKBNR w KQ - 1 5")
+	let promotingMove = new Move('f7', 'g8', 'Q')
 	output.whitePromotingTrue = promotionReadyBoard._whitePromoting(promotingMove)
 	output.whitePromotingFalse = promotionReadyBoard._whitePromoting(nonJumpMove1)
 	output.blackPromotingFalse1 = promotionReadyBoard._blackPromoting(promotingMove)
 
-	promotionReadyBoard = new chessRules.Board("rnbqkbnr/pppp1ppp/8/8/6PP/3P4/PPPKPp2/RNBQ1BNR b kq - 1 5")
-	promotingMove = new chessRules.Move('f2', 'g1', 'Q')
+	promotionReadyBoard = new Board("rnbqkbnr/pppp1ppp/8/8/6PP/3P4/PPPKPp2/RNBQ1BNR b kq - 1 5")
+	promotingMove = new Move('f2', 'g1', 'Q')
 	output.blackPromotingTrue = promotionReadyBoard._blackPromoting(promotingMove)
 	output.blackPromotingFalse2 = promotionReadyBoard._blackPromoting(jumpMove)
 
-	let castleReady = new chessRules.Board("rnbqk2r/ppppbppp/4pn2/8/8/4PN2/PPPPBPPP/RNBQK2R w KQkq - 4 4")
-	let castleMove = new chessRules.Move('e1', 'g1')
+	let castleReady = new Board("rnbqk2r/ppppbppp/4pn2/8/8/4PN2/PPPPBPPP/RNBQK2R w KQkq - 4 4")
+	let castleMove = new Move('e1', 'g1')
 	output.whiteCastlingTrue = castleReady._movingWhiteKingFromStartPos(castleMove)
 	output.whiteCastlingFalse = castleReady._movingWhiteKingFromStartPos(nonJumpMove1)
 	output.blackCastlingFalse = castleReady._movingBlackKingFromStartPos(castleMove)
 
 	castleReady.performMove(castleMove)
-	castleMove = new chessRules.Move('e8', 'g8')
+	castleMove = new Move('e8', 'g8')
 	output.blackCastlingTrue = castleReady._movingBlackKingFromStartPos(castleMove)
 
 
-	let inCheckBoard = new chessRules.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
+	let inCheckBoard = new Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
 
 	output.inCheckTrue = inCheckBoard._inCheck(true)
 	output.inCheckFalse1 = inCheckBoard._inCheck(false)
@@ -220,25 +220,25 @@ function expectedBoardLogic(){
 }
 
 function genGameStack(){
-	let game = new chessRules.ChessGame('startpos')
+	let game = new ChessGame('startpos')
 
-	game.performMove(new chessRules.Move('b1', 'c3'))
-	game.performMove(new chessRules.Move('d7', 'd5'))
+	game.performMove(new Move('b1', 'c3'))
+	game.performMove(new Move('d7', 'd5'))
 
 	// for (const move of game.moves){
 	// 	console.log([Math.floor(move.startSquare / 8), move.startSquare % 8,
 	// 		Math.floor(move.endSquare / 8), move.endSquare % 8])
 	// }
 
-	game.performMove(new chessRules.Move('c3', 'd5'))
+	game.performMove(new Move('c3', 'd5'))
 
-	secondFen = game.getBoardState().toFen()
+	let secondFen = game.getBoardState().toFen()
 
 	game.undoMove()
 	game.undoMove()
 	game.undoMove()
 
-	firstFen = game.getBoardState().toFen()
+	let firstFen = game.getBoardState().toFen()
 
 	return {
 		firstFen: firstFen,

@@ -1,4 +1,4 @@
-#board_grid {
+#board-grid {
 	/* margin: auto; */
 	display: grid;
 	overflow: hidden;
@@ -6,7 +6,7 @@
 	grid-template-rows: 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5% 12.5%;
 }
 
-#board_container {
+#board-container {
 	display: flex;
 	justify-content: center;
 	align-items: center;

@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"extendedDiagnostics": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"noImplicitAny": true,
+		"sourceMap": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"target":"ES6",
+		"outDir": "src/dist",
+		"baseUrl": ".",
+		"paths": {
+			"*": ["node_modules/*"]
+		}
+	},
+	"include": [
+		"src/typescript/**/*"
+	],
+	"exclude":[
+		"node_modules",
+		"src/typescript/**/*.test.ts"
+	]
+}

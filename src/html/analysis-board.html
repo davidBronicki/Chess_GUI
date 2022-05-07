@@ -4,19 +4,21 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
 	<meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-	<link rel="stylesheet" type="text/css" href="../main_style.css">
-	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="../css/main-style.css">
+	<link rel="stylesheet" type="text/css" href="../css/analysis-style.css">
 	<title>Test</title>
 </head>
-<body id="main_grid" class="mainTheme">
+<body id="analysis-grid" class="mainTheme">
 	<div id="board">
-		<iframe src="../board/index.html"></iframe>
+		<iframe src="chess-board.html"></iframe>
 	</div>
-	<div id="moves" class="emphTheme1">
+	<div id="board-status" class="emphTheme1">
 		<p>Game history goes here.</p>
 	</div>
-	<div id="analysis" class="offTheme1">
+	<div id="board-analysis" class="offTheme1">
 		<p>Game analysis goes here.</p>
 	</div>
+
+	<script src="../dist/analysis-board/renderer.js"></script>
 </body>
 </html>

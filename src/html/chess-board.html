@@ -4,13 +4,13 @@
 	<!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
 	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
 	<meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-	<link rel="stylesheet" type="text/css" href="../main_style.css">
-	<link rel="stylesheet" type="text/css" href="style.css">
-	<link rel="stylesheet" type="text/css" href="../board_theme/style.css">
+	<link rel="stylesheet" type="text/css" href="../css/main-style.css">
+	<link rel="stylesheet" type="text/css" href="../css/board-style.css">
+	<link rel="stylesheet" type="text/css" href="../css/board-themes/main-theme.css">
 	<title>Hello World!</title>
 </head>
-<body id="board_container">
-<div id="board_grid">
+<body id="board-container">
+<div id="board-grid">
 	<!-- <img id="a8" class="lightSquare" src="../public/piece/cburnett/bB.svg" alt="black bishop" width=100%> -->
 	<div id="a8" class="lightSquare"><img src="../../assets/cburnett/bB.svg" alt="black bishop" width="100%"></div>
 	<div id="b8" class="darkSquare"></div>
@@ -85,5 +85,5 @@
 	<div id="h1" class="lightSquare"></div>
 </div>
 </body>
-<script src="renderer.js"></script>
+<script src="../dist/chess-board/renderer.js"></script>
 </html>

@@ -1,4 +1,4 @@
-const chessRules = require("./chess-rules")
+import {Board, Move, ChessGame} from './chess-rules'
 
 test("Performance test", () => {
 	expect(genPerformanceTests()).toEqual(expectedPerformanceTests())
@@ -26,12 +26,12 @@ function expectedPerformanceTests(){
 	}
 }
 
-function perft(fen, depth){
+function perft(fen: string, depth: number){
 	// let fen = "startpos"
 	// let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-	let game = new chessRules.ChessGame(fen)
+	let game = new ChessGame(fen)
 
-	let helperF = function(depth){
+	let helperF = function(depth: number){
 		if (depth === 1) return game.moves.length
 		let output = 0
 		let tempMoves = game.getMoves()

@@ -1,18 +1,50 @@
-const fs = require('fs')
-const deepEqual = require('deep-equal')
+import deepEqual from 'fast-deep-equal/es6'
 
-const boardDefs = JSON.parse(fs.readFileSync("chess_module/square.json"))
-const castleSquares = JSON.parse(fs.readFileSync("chess_module/castle-squares.json"))
+import boardDefs from './square.json'
+import castleSquares from './castle-squares.json'
 
-//algebraic to index
-function ati(index){
-	return boardDefs.alg_to_index[index]
+import * as interfaces from './chess-ipc-types'
+
+//useful thing
+function dynamicPropertySetter<
+	Type,
+	K extends keyof Type,
+	V extends Type[K]>(
+		thing: Type,
+		propertyName: K,
+		newValue: V) {
+    thing[propertyName] = newValue
 }
 
-// function _modifyCastleRight
+//algebraic to index
+export function ati(index: string): number{
+	return boardDefs.alg_to_index[
+		index as keyof typeof boardDefs.alg_to_index]
+}
 
-class Board {
-	constructor(fenString, copyThis){
+export function ita(index: number): string{
+	return boardDefs.index_to_alg[index]
+}
+
+export class Board {
+	pieces: Array<string>
+	blackToPlay: boolean
+	blackShort: boolean
+	blackLong: boolean
+	whiteShort: boolean
+	whiteLong: boolean
+	enPassantSquare: number
+	plySinceCaptureOrPawnMove: number
+	moveNumber: number
+	constructor(
+		fenString?: string,
+		copyThis?: Board){
+
+		if (fenString !== undefined &&
+			copyThis !== undefined){
+			throw new TypeError("at least one undefined parameter must be passed to Board")
+		}
+		
 		fenString ??= undefined
 		if (fenString === "startpos"){
 			fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -46,9 +78,12 @@ class Board {
 			this.blackLong = splitFenString[2].includes('q')
 			this.whiteShort = splitFenString[2].includes('K')
 			this.whiteLong = splitFenString[2].includes('Q')
-			splitFenString[3] = splitFenString[3] === '-' ? '_' : splitFenString[3]
+			splitFenString[3] = splitFenString[3] === '-' ?
+				'_' :
+				splitFenString[3]
 			this.enPassantSquare = ati(splitFenString[3])
-			this.plySinceCaptureOrPawnMove = parseInt(splitFenString[4], 10)
+			this.plySinceCaptureOrPawnMove = parseInt(
+				splitFenString[4], 10)
 			this.moveNumber = parseInt(splitFenString[5])
 		}
 		else{
@@ -126,9 +161,9 @@ class Board {
 		return output
 	}
 
-	equivalentPositions(otherBoard){
+	equivalentPositions(otherBoard: Board){
 		for (let i = 0; i < 64; ++i){
-			if (this.pieces[i] !== otherBoard.pieceKey[i]){
+			if (this.pieces[i] !== otherBoard.pieces[i]){
 				return false
 			}
 		}
@@ -141,62 +176,69 @@ class Board {
 			this.enPassantSquare === otherBoard.enPassantSquare)
 	}
 
-	_modifyCastleRight(move, attributeString){
-		if (castleSquares[attributeString].includes(move.startSquare) ||
-			castleSquares[attributeString].includes(move.endSquare)){
-			this[attributeString] = false;
+	_modifyCastleRight(this: Board, move: Move, attributeString: string){
+		if (castleSquares[
+				attributeString as keyof typeof castleSquares].
+					includes(move.startSquare) ||
+			castleSquares[
+				attributeString as keyof typeof castleSquares].
+					includes(move.endSquare)){
+			dynamicPropertySetter(
+				this,
+				attributeString as keyof Board,
+				false)
 		}
 	}
 
-	_movingWhiteKingFromStartPos(move){
+	_movingWhiteKingFromStartPos(move: Move){
 		return !this.blackToPlay &&
 		move.startSquare === ati('e1') &&
 		this.pieces[ati('e1')] === 'K'
 	}
 
-	_movingBlackKingFromStartPos(move){
+	_movingBlackKingFromStartPos(move: Move){
 		return this.blackToPlay &&
 		move.startSquare === ati('e8') &&
 		this.pieces[ati('e8')] === 'k'
 	}
 
-	_whitePromoting(move){
+	_whitePromoting(move: Move){
 		return this.pieces[move.startSquare] === 'P' &&
 		Math.floor(move.startSquare / 8) === 6
 	}
 
-	_blackPromoting(move){
+	_blackPromoting(move: Move){
 		return this.pieces[move.startSquare] === 'p' &&
 		Math.floor(move.startSquare / 8) === 1
 	}
 
-	_whiteEnPassanting(move){
+	_whiteEnPassanting(move: Move){
 		return this.pieces[move.startSquare] === 'P' &&//pawn move
 		(move.startSquare - move.endSquare) % 2 !== 0 &&//capture move
 		this.pieces[move.endSquare] === '_'//no piece at target
 	}
 
-	_blackEnPassanting(move){
+	_blackEnPassanting(move: Move){
 		return this.pieces[move.startSquare] === 'p' &&//pawn move
 		(move.startSquare - move.endSquare) % 2 !== 0 &&//capture move
 		this.pieces[move.endSquare] === '_'//no piece at target
 	}
 
-	_pawnJump(move){
+	_pawnJump(move: Move){
 		return (this.pieces[move.startSquare] === 'p' &&
 			Math.floor(move.startSquare / 8) - Math.floor(move.endSquare / 8) === 2) ||
 			(this.pieces[move.startSquare] === 'P' &&
 				Math.floor(move.endSquare / 8) - Math.floor(move.startSquare / 8) === 2)
 	}
 
-	_pawnOrCaptureMove(move){
+	_pawnOrCaptureMove(move: Move){
 		return this.pieces[move.startSquare] === 'p' ||
 		this.pieces[move.startSquare] === 'P' ||
 		this.pieces[move.endSquare] !== '_'
 	}
 
-	_inCheck(blacksKing){
-		blacksKing = blacksKing ?? this.blackToPlay
+	_inCheck(blacksKing?: boolean){
+		blacksKing ??= this.blackToPlay
 		for (var index = 0; index < 64; ++index){
 			if (blacksKing && this.pieces[index] === 'k'){
 				break
@@ -208,14 +250,17 @@ class Board {
 		return this.squareUnderAttack(!blacksKing, index)
 	}
 
-	squareUnderAttack(byBlack, index){
+	squareUnderAttack(byBlack: boolean, index: number){
 		let checkColor = byBlack ?
-			source => this.pieces[source].toUpperCase() !== this.pieces[source]:
-			source => this.pieces[source].toLowerCase() !== this.pieces[source]
-		let occupied = source => this.pieces[source] !== '_'
+			(source: number) => {
+				return this.pieces[source].toUpperCase() !== this.pieces[source]} :
+			(source: number) => {
+				return this.pieces[source].toLowerCase() !== this.pieces[source]}
+		let occupied = (source: number) => {
+			return this.pieces[source] !== '_'}
 
-		let isKeyPiece = (source, pieceKey) =>
-			this.pieces[source].toLowerCase() === pieceKey
+		let isKeyPiece = (source: number, pieceKey: string) => {
+			return this.pieces[source].toLowerCase() === pieceKey}
 
 		//knight attacks
 		for (const source of knightMovesFrom(index)){
@@ -225,25 +270,25 @@ class Board {
 		}
 
 		//rook attacks
-		for (const source of makeSlideMoveIterator(index, 'up')){
+		for (const source of new SlideMoveIterator(index, 'up')){
 			if (checkColor(source) && (isKeyPiece(source, 'r') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'down')){
+		for (const source of new SlideMoveIterator(index, 'down')){
 			if (checkColor(source) && (isKeyPiece(source, 'r') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'left')){
+		for (const source of new SlideMoveIterator(index, 'left')){
 			if (checkColor(source) && (isKeyPiece(source, 'r') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'right')){
+		for (const source of new SlideMoveIterator(index, 'right')){
 			if (checkColor(source) && (isKeyPiece(source, 'r') || isKeyPiece(source, 'q'))){
 				return true
 			}
@@ -251,25 +296,25 @@ class Board {
 		}
 
 		//bishop attacks
-		for (const source of makeSlideMoveIterator(index, 'up right')){
+		for (const source of new SlideMoveIterator(index, 'up right')){
 			if (checkColor(source) && (isKeyPiece(source, 'b') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'up left')){
+		for (const source of new SlideMoveIterator(index, 'up left')){
 			if (checkColor(source) && (isKeyPiece(source, 'b') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'down right')){
+		for (const source of new SlideMoveIterator(index, 'down right')){
 			if (checkColor(source) && (isKeyPiece(source, 'b') || isKeyPiece(source, 'q'))){
 				return true
 			}
 			if (occupied(source)) break
 		}
-		for (const source of makeSlideMoveIterator(index, 'down left')){
+		for (const source of new SlideMoveIterator(index, 'down left')){
 			if (checkColor(source) && (isKeyPiece(source, 'b') || isKeyPiece(source, 'q'))){
 				return true
 			}
@@ -297,7 +342,7 @@ class Board {
 		return false
 	}
 
-	performMove(move){
+	performMove(move: Move){
 		//detect changes to castling rights
 		this._modifyCastleRight(move, "blackShort")
 		this._modifyCastleRight(move, "blackLong")
@@ -377,7 +422,7 @@ class Board {
 		this.blackToPlay = !this.blackToPlay
 	}
 
-	moveIsLegal(move){
+	moveIsLegal(move: Move){
 		//assumed pseudo legal, check if we are in check or if we castled through/out of check
 
 		//bad castle check
@@ -412,24 +457,28 @@ class Board {
 		return !boardCopy._inCheck(this.blackToPlay)
 	}
 
-	_makePseudoBishopSlides(index, friendly, occupied){
-		let moves = []
-		for (const square of makeSlideMoveIterator(index, 'up right')){
+	_makePseudoBishopSlides(
+		index: number,
+		friendly: (index: number) => boolean,
+		occupied: (index: number) => boolean){
+
+		let moves: Array<Move> = []
+		for (const square of new SlideMoveIterator(index, 'up right')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'up left')){
+		for (const square of new SlideMoveIterator(index, 'up left')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'down right')){
+		for (const square of new SlideMoveIterator(index, 'down right')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'down left')){
+		for (const square of new SlideMoveIterator(index, 'down left')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
@@ -437,24 +486,28 @@ class Board {
 		return moves
 	}
 
-	_makePseudoRookSlides(index, friendly, occupied){
+	_makePseudoRookSlides(
+		index: number,
+		friendly: (index: number) => boolean,
+		occupied: (index: number) => boolean){
+
 		let moves = []
-		for (const square of makeSlideMoveIterator(index, 'up')){
+		for (const square of new SlideMoveIterator(index, 'up')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'down')){
+		for (const square of new SlideMoveIterator(index, 'down')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'right')){
+		for (const square of new SlideMoveIterator(index, 'right')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
 		}
-		for (const square of makeSlideMoveIterator(index, 'left')){
+		for (const square of new SlideMoveIterator(index, 'left')){
 			if (friendly(square)) break
 			moves.push(new Move(index, square))
 			if (occupied(square)) break
@@ -462,7 +515,10 @@ class Board {
 		return moves
 	}
 
-	_makePseudoKnightMoves(index, friendly){
+	_makePseudoKnightMoves(
+		index: number,
+		friendly: (index: number) => boolean){
+
 		let moves = []
 		for (const square of knightMovesFrom(index)){
 			if (friendly(square)) continue
@@ -471,7 +527,12 @@ class Board {
 		return moves
 	}
 
-	_makePseudoPawnMoves(index, friendly, occupied, isBlack){
+	_makePseudoPawnMoves(
+		index: number,
+		friendly: (index: number) => boolean,
+		occupied: (index: number) => boolean,
+		isBlack: boolean){
+
 		let moves = []
 		let pawnIncrement = isBlack ? -8 : 8
 		let startRank = isBlack ? 6 : 1
@@ -516,7 +577,10 @@ class Board {
 		return moves
 	}
 
-	_makePseudoKingMoves(index, friendly){
+	_makePseudoKingMoves(
+		index: number,
+		friendly: (index: number) => boolean){
+
 		let moves = []
 		let rank = Math.floor(index / 8)
 		let file = index % 8
@@ -547,7 +611,7 @@ class Board {
 		return moves
 	}
 
-	_makePseudoCastles(isBlack){
+	_makePseudoCastles(isBlack: boolean){
 		let moves = []
 		if (isBlack){
 			if (this.blackShort &&
@@ -577,18 +641,18 @@ class Board {
 		return moves
 	}
 
-	generateLegalMovesFrom(index){
+	generateLegalMovesFrom(index: number){
 		if (this.pieces[index] === '_') return []
 
 		let pseudoLegal = []
 
-		let occupied = source => this.pieces[source] !== '_'
+		let occupied = (source: number) => this.pieces[source] !== '_'
 
 		let isBlack = this.pieces[index].toLowerCase() === this.pieces[index]
 
 		let friendly = isBlack ?
-			source => this.pieces[source].toUpperCase() !== this.pieces[source] :
-			source => this.pieces[source].toLowerCase() !== this.pieces[source]
+			(source: number) => this.pieces[source].toUpperCase() !== this.pieces[source] :
+			(source: number) => this.pieces[source].toLowerCase() !== this.pieces[source]
 
 		//sliding moves
 		if (['b', 'q', 'r'].includes(this.pieces[index].toLowerCase())){
@@ -636,8 +700,8 @@ class Board {
 		let moves = []
 
 		let checkColor = this.blackToPlay ?
-			source => this.pieces[source].toUpperCase() !== this.pieces[source] :
-			source => this.pieces[source].toLowerCase() !== this.pieces[source]
+			(source: number) => this.pieces[source].toUpperCase() !== this.pieces[source] :
+			(source: number) => this.pieces[source].toLowerCase() !== this.pieces[source]
 
 		for (let index = 0; index < 64; ++index){
 			if (checkColor(index)){
@@ -649,7 +713,7 @@ class Board {
 	}
 }
 
-function promotionMoveSuite(startIndex, endIndex){
+function promotionMoveSuite(startIndex: number, endIndex: number){
 	return [
 		new Move(startIndex, endIndex, 'Q'),
 		new Move(startIndex, endIndex, 'R'),
@@ -658,10 +722,10 @@ function promotionMoveSuite(startIndex, endIndex){
 	]
 }
 
-function knightMovesFrom(index){
-	output = []
-	rank = Math.floor(index / 8)
-	file = index % 8
+function knightMovesFrom(index: number){
+	let output: Array<number> = []
+	let rank = Math.floor(index / 8)
+	let file = index % 8
 	if (rank + 2 < 8){
 		if (file + 1 < 8){
 			output.push(index + 16 + 1)
@@ -697,66 +761,75 @@ function knightMovesFrom(index){
 	return output
 }
 
-function makeSlideMoveIterator(baseIndex, directionString){
-	directionString = directionString.toLowerCase()
-	let up = directionString.includes('up')
-	let down = directionString.includes('down')
-	let left = directionString.includes('left')
-	let right = directionString.includes('right')
+class SlideMoveIterator implements Iterable<number>, Iterator<number>{
+	rank: number
+	file: number
+	next: () => IteratorResult<number>
+	[Symbol.iterator](): Iterator<number>{
+		return this
+	}
 
-	let rankIterator = objectWithRank => {}
-	if (up) rankIterator = objectWithRank => {++objectWithRank.rank}
-	if (down) rankIterator = objectWithRank => {--objectWithRank.rank}
-	// let rankIterator = inputRank => {}
-	// if (up) rankIterator = inputRank => {++inputRank}
-	// if (down) rankIterator = inputRank => {--inputRank}
+	constructor(
+		baseIndex: number,
+		directionString: string){
+		
+		directionString = directionString.toLowerCase()
+		let up = directionString.includes('up')
+		let down = directionString.includes('down')
+		let left = directionString.includes('left')
+		let right = directionString.includes('right')
 
-	let rankOutOfRange = inputRank => false
-	if (up) rankOutOfRange = inputRank => inputRank >= 8
-	if (down) rankOutOfRange = inputRank => inputRank < 0
+		let rankIterator = (objectWithRank: SlideMoveIterator) => {}
+		if (up) rankIterator = objectWithRank => {++objectWithRank.rank}
+		if (down) rankIterator = objectWithRank => {--objectWithRank.rank}
+		// let rankIterator = inputRank => {}
+		// if (up) rankIterator = inputRank => {++inputRank}
+		// if (down) rankIterator = inputRank => {--inputRank}
 
-	let fileIterator = objectWithFile => {}
-	if (right) fileIterator = objectWithFile => {++objectWithFile.file}
-	if (left) fileIterator = objectWithFile => {--objectWithFile.file}
-	// let fileIterator = inputFile => {}
-	// if (right) fileIterator = inputFile => {++inputFile}
-	// if (left) fileIterator = inputFile => {--inputFile}
+		let rankOutOfRange = (inputRank: number) => false
+		if (up) rankOutOfRange = inputRank => inputRank >= 8
+		if (down) rankOutOfRange = inputRank => inputRank < 0
 
-	let fileOutOfRange = inputFile => false
-	if (right) fileOutOfRange = inputFile => inputFile >= 8
-	if (left) fileOutOfRange = inputFile => inputFile < 0
+		let fileIterator = (objectWithFile: SlideMoveIterator) => {}
+		if (right) fileIterator = objectWithFile => {++objectWithFile.file}
+		if (left) fileIterator = objectWithFile => {--objectWithFile.file}
+		// let fileIterator = inputFile => {}
+		// if (right) fileIterator = inputFile => {++inputFile}
+		// if (left) fileIterator = inputFile => {--inputFile}
 
-	let rank = Math.floor(baseIndex / 8)
-	let file = baseIndex % 8
+		let fileOutOfRange = (inputRank: number) => false
+		if (right) fileOutOfRange = inputFile => inputFile >= 8
+		if (left) fileOutOfRange = inputFile => inputFile < 0
 
-	return {
-		rank: rank,
-		file: file,
-		next: function(){
+		this.rank = Math.floor(baseIndex / 8)
+		this.file = baseIndex % 8
+
+		this.next = function(this: SlideMoveIterator){
 			rankIterator(this)
 			fileIterator(this)
 			if (rankOutOfRange(this.rank) || fileOutOfRange(this.file)){
 				return {
-					// done: true,
-					// value: 64
+					value: 64,
 					done: true
 				}
 			} else{
 				return {
-					// done: false,
-					// value: 8 * this.rank + this.file
-					value: 8 * this.rank + this.file
+					value: 8 * this.rank + this.file,
+					done: false
 				}
 			}
-		},
-		[Symbol.iterator]: function(){
-			return this
 		}
 	}
 }
 
-class Move{
-	constructor(startSquare, endSquare, promotionRule){
+export class Move{
+	startSquare: number
+	endSquare: number
+	promotionRule: string
+	constructor(
+		startSquare: number | string,
+		endSquare: number | string,
+		promotionRule?: string){
 		this.startSquare = typeof startSquare === "number" ?
 			startSquare : ati(startSquare)
 		this.endSquare = typeof endSquare === "number" ?
@@ -765,29 +838,50 @@ class Move{
 	}
 }
 
-class ChessGame {
+class GameState{
+	state: interfaces.GameState
+	ending: interfaces.EndState
+}
+
+export class ChessGame {
+	boardStateList: Array<Board>
+	moves: Array<Move>
 	constructor(fenString="startpos"){
 		this.boardStateList = [new Board(fenString)]
 		this.moves = this.boardStateList[0].generateLegalMoves()
 	}
 
-	adjudicateMove(move){
+	adjudicateMove(move: Move){
 		return "legal"
 	}
 
-	adjudicatePosition(){
+	adjudicatePosition(): GameState{
 		if (this.boardStateList.at(-1).plySinceCaptureOrPawnMove === 100){
-			return "draw 50"
+			return {
+				state: interfaces.GameState.draw,
+				ending: interfaces.EndState.fiftyMoveRule
+			}
 		}
+		let blackToPlay = this.boardStateList.at(-1).blackToPlay
 		if (this.moves.length === 0){
 			if (this.boardStateList.at(-1)._inCheck()){
-				return this.boardStateList.at(-1).blackToPlay ?
-					"white wins" :
-					"black wins"
+				return {
+					state: blackToPlay ?
+						interfaces.GameState.whiteVictory :
+						interfaces.GameState.blackVictory,
+					ending: interfaces.EndState.checkmate
+				}
+				// return this.boardStateList.at(-1).blackToPlay ?
+				// 	"white wins" :
+				// 	"black wins"
 			}
-			return "draw stalemate"
+			return {
+				state: interfaces.GameState.draw,
+				ending: interfaces.EndState.stalemate
+			}
+			// return "draw stalemate"
 		}
-		repetitionCount = 0
+		let repetitionCount = 0
 		for (let i = this.boardStateList.length;
 			i >= Math.max(0, this.boardStateList.length - this.boardStateList.at(-1).plySinceCaptureOrPawnMove);
 			--i){
@@ -796,12 +890,22 @@ class ChessGame {
 			}
 		}
 		if (repetitionCount >= 3){
-			return "draw repetition"
+			return {
+				state: interfaces.GameState.draw,
+				ending: interfaces.EndState.drawByRepetition
+			}
+			// return "draw repetition"
 		}
-		return "good"
+		return {
+			state: blackToPlay ?
+				interfaces.GameState.blackToPlay :
+				interfaces.GameState.whiteToPlay,
+			ending: interfaces.EndState.undecided
+		}
+		// return "good"
 	}
 
-	performMove(move, force = false){
+	performMove(move: Move, force = false){
 		if (!force && !this.moves.some(element => deepEqual(element, move))){
 			return false
 		}
@@ -822,18 +926,19 @@ class ChessGame {
 		return [...this.moves]
 	}
 
-	getMovesFrom(square){
+	getMovesFrom(square: string | number){
 		if (typeof square !== 'number'){
 			square = ati(square)
 		}
-		return this.boardStateList.generateLegalMovesFrom(square)
+		return this.boardStateList.at(-1).
+			generateLegalMovesFrom(square)
 	}
 
 	getBoardState(){
 		return this.boardStateList.at(-1)
 	}
 
-	getPieceAt(square){
+	getPieceAt(square: string | number){
 		if (typeof square !== 'number'){
 			square = ati(square)
 		}
@@ -841,8 +946,85 @@ class ChessGame {
 	}
 }
 
-module.exports = {
-	Board: Board,
-	Move: Move,
-	ChessGame: ChessGame
+export function generatePositionData(
+	game: ChessGame
+): interfaces.I_FullBoardPosition{
+	let state = game.adjudicatePosition()
+	return {
+		move: game.boardStateList.length / 2,
+		state: state.state,
+		ending: state.ending,
+		pieces: game.boardStateList.at(-1).pieces
+	}
+}
+
+export function generateNewPositionData(
+	game: ChessGame,
+	gameIndex: number
+): interfaces.I_NewBoardInfo{
+	return {
+		index: gameIndex,
+		position: generatePositionData(game)
+	}
+}
+
+export function generateLegalMoves(
+	game: ChessGame,
+	sourceSquare: number
+): interfaces.I_AvailableMoves{
+	let outputMoves: number[] = []
+	for (let move of game.moves){
+		if (move.startSquare === sourceSquare){
+			outputMoves.push(move.endSquare)
+		}
+	}
+	return {
+		targetSquares: outputMoves
+	}
+}
+
+export function isPromoting(
+	game: ChessGame,
+	sourceSquare: number,
+	targetSquare: number
+): boolean{
+	let currentBoardState = game.getBoardState()
+	let blackToPlay = currentBoardState.blackToPlay
+	if (blackToPlay){
+		return currentBoardState._blackPromoting(
+			new Move(sourceSquare, targetSquare)
+		)
+	}
+	else{
+		return currentBoardState._whitePromoting(
+			new Move(sourceSquare, targetSquare)
+		)
+	}
+}
+
+export function performMove(
+	game: ChessGame,
+	move: Move
+): void{
+	game.performMove(move)
+}
+
+export function generateMoveDeltas(
+	game: ChessGame
+): interfaces.I_BoardDelta{
+	let currentState = game.getBoardState().pieces
+	let previousState = game.boardStateList.at(-2).pieces
+	let squareDeltas: interfaces.I_SquareDelta[] = []
+	for (let i = 0; i < 64; i++){
+		if (currentState[i] !== previousState[i]){
+			squareDeltas.push({
+				squareIndex: i,
+				priorSquare: previousState[i],
+				newSquare: currentState[i]
+			})
+		}
+	}
+	return {
+		squareDeltas: squareDeltas
+	}
 }
