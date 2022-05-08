@@ -882,8 +882,8 @@ export class ChessGame {
 			// return "draw stalemate"
 		}
 		let repetitionCount = 0
-		for (let i = this.boardStateList.length;
-			i >= Math.max(0, this.boardStateList.length - this.boardStateList.at(-1).plySinceCaptureOrPawnMove);
+		for (let i = this.boardStateList.length - 1;
+			i >= Math.max(0, this.boardStateList.length - this.boardStateList.at(-1).plySinceCaptureOrPawnMove - 1);
 			--i){
 			if (this.boardStateList[i].equivalentPositions(this.boardStateList.at(-1))){
 				++repetitionCount;

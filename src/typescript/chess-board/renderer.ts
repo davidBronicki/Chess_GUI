@@ -1,3 +1,63 @@
+var gameIndex = -1
+
+function initBoard(){
+	window.chess = window.parent.parent.chess
+
+	let boardDiv = window.document.getElementById('board-grid')
+	for (let j = 0; j < 8; j++){
+		for (let i = 0; i < 8; i++){
+			let newDiv = window.document.createElement('div')
+			boardDiv.appendChild(newDiv)
+			let index = i + (7 - j) * 8
+			newDiv.className = (i + j) % 2 === 1 ?
+				'darkSquare' :
+				'lightSquare'
+			window.chess.indexToAlgebraic(index).then(
+				(result: string) => {
+					newDiv.id = result
+				}
+			)
+		}
+	}
+	resquare()
+	setStart()
+}
+
+function setBoard(position: any){
+	for (let i = 0; i < 8; i++){
+		for (let j = 0; j < 8; j++){
+			let index = i + 8 * j
+			let piece = position.pieces[index]
+			if (piece === '_'){
+				continue
+			}
+			let sourceFile = pieceToSourceFile(piece)
+			let newElement = window.document.createElement('img')
+			newElement.src = sourceFile
+			newElement.style.width = '100%'
+			window.chess.indexToAlgebraic(index).then(
+				(result: string) => {
+					let square = window.document.getElementById(result)
+					square.appendChild(newElement)
+				}
+			)
+		}
+	}
+}
+
+function setStart(){
+	window.chess.start().then(
+		(newBoardInfo: any) => {
+			gameIndex = newBoardInfo.index
+			setBoard(newBoardInfo.position)
+		}
+	)
+}
+
+function invertBoard(){
+
+}
+
 function resquare(){
 	let container = document.getElementById("board-grid")
 
@@ -7,12 +67,15 @@ function resquare(){
 	container.style.height = container.style.width
 }
 
-window.addEventListener('DOMContentLoaded', resquare)
+window.addEventListener('DOMContentLoaded', initBoard)
 window.addEventListener('resize', resquare)
 
 // mainBoardState = window.board.blank()
 
 function pieceToSourceFile(pieceName: string){
+	if (pieceName === '_'){
+		return ''
+	}
 	let directory = '../../assets/cburnett/'
 	let colorText = ''
 
@@ -34,25 +97,3 @@ function removeAllChildNodes(parent: Node) {
 		parent.removeChild(parent.firstChild);
 	}
 }
-
-// function setSquareContent(squareName: string){
-// 	let container = document.getElementById(squareName)
-// 	let image = document.createElement('img')
-// 	image.src = pieceToSourceFile(mainBoardState.getPieceAt(squareName))
-
-// 	removeAllChildNodes(container)
-// 	container.appendChild(image)
-// }
-
-// function resetBoard(e){
-// 	for (let i = 0; i < 64; ++i){
-// 		setSquareContent(i)
-// 	}
-// 	console.log('fucking bullshit')
-// }
-
-// document.addEventListener('resetBoard', resetBoard)
-
-// // window.addEventListener('DOMContentLoaded', resetBoard)
-
-// document.dispatchEvent(new Event('resetBoard'))

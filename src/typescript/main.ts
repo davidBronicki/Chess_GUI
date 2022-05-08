@@ -4,6 +4,11 @@ import * as path from 'path'
 
 import * as chess from './chess-handler/chess-rules.js'
 
+const electronReload = require('electron-reload')(__dirname, {
+		electron: path.join(__dirname, '../..', 'node_modules', 'electron', 'dist', 'electron'),
+		electronArgv: ['dist/main.js']
+	});
+
 class indexedGame{
 	index: number
 	game: chess.ChessGame
