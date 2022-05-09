@@ -971,16 +971,14 @@ export function generateNewPositionData(
 export function generateLegalMoves(
 	game: ChessGame,
 	sourceSquare: number
-): interfaces.I_AvailableMoves{
+) {
 	let outputMoves: number[] = []
 	for (let move of game.moves){
 		if (move.startSquare === sourceSquare){
 			outputMoves.push(move.endSquare)
 		}
 	}
-	return {
-		targetSquares: outputMoves
-	}
+	return outputMoves
 }
 
 export function isPromoting(
@@ -1002,13 +1000,6 @@ export function isPromoting(
 	}
 }
 
-export function performMove(
-	game: ChessGame,
-	move: Move
-): void{
-	game.performMove(move)
-}
-
 export function generateMoveDeltas(
 	game: ChessGame
 ): interfaces.I_BoardDelta{
@@ -1026,5 +1017,11 @@ export function generateMoveDeltas(
 	}
 	return {
 		squareDeltas: squareDeltas
+	}
+}
+
+export function generateNullDelta(): interfaces.I_BoardDelta{
+	return {
+		squareDeltas: []
 	}
 }

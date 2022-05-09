@@ -7,7 +7,7 @@
 		"sourceMap": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"target":"ES6",
+		"target":"ES2022",
 		"outDir": "src/dist",
 		"baseUrl": ".",
 		"paths": {

@@ -1,7 +1,15 @@
 .lightSquare {
-	background-color: rgb(218, 197, 165);
+	background-color: rgb(183 176 152);
 }
 
 .darkSquare {
-	background-color: rgb(43, 28, 11);
+	background-color: rgb(88 60 29);
+}
+
+.indicator {
+	height: 40%;
+	width: 40%;
+	margin: 30%;
+	border-radius: 50%;
+	background-color: aqua;
 }

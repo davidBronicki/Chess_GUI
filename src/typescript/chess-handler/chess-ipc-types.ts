@@ -37,7 +37,3 @@ export interface I_SquareDelta{
 export interface I_BoardDelta{
 	squareDeltas: I_SquareDelta[]
 }
-
-export interface I_AvailableMoves{
-	targetSquares: number[]
-}

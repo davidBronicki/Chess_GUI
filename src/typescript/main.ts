@@ -4,20 +4,15 @@ import * as path from 'path'
 
 import * as chess from './chess-handler/chess-rules.js'
 
-const electronReload = require('electron-reload')(__dirname, {
-		electron: path.join(__dirname, '../..', 'node_modules', 'electron', 'dist', 'electron'),
-		electronArgv: ['dist/main.js']
-	});
-
 class indexedGame{
-	index: number
+	id: number
 	game: chess.ChessGame
 
 	constructor(
 		index: number,
 		fen: string = 'startpos'
 	){
-		this.index = index
+		this.id = index
 		this.game = new chess.ChessGame(fen)
 	}
 }
@@ -31,7 +26,7 @@ function makeChessHandles(){
 	) => {
 		let lowestOpenIndex = 0
 		for (let game of openGames){
-			if (game.index !== lowestOpenIndex){
+			if (game.id !== lowestOpenIndex){
 				break
 			}
 			lowestOpenIndex++
@@ -42,6 +37,40 @@ function makeChessHandles(){
 		return chess.generateNewPositionData(
 			openGames[lowestOpenIndex].game,
 			lowestOpenIndex)
+	})
+
+	ipcMain.handle('chess:moves-from', async (
+		event: IpcMainInvokeEvent,
+		gameID: number,
+		sourceSquare: number
+	) => {
+		for (let game of openGames){
+			if (game.id === gameID){
+				return chess.generateLegalMoves(game.game, sourceSquare)
+			}
+		}
+		return []
+	})
+
+	ipcMain.handle('chess:perform-move', async (
+		event: IpcMainInvokeEvent,
+		gameID: number,
+		sourceSquare: number,
+		targetSquare: number
+	) => {
+		for (let game of openGames){
+			if (game.id === gameID){
+				if (game.game.performMove(new chess.Move(
+					sourceSquare, targetSquare
+				))){
+					return chess.generateMoveDeltas(game.game)
+				}
+				else{
+					return chess.generateNullDelta()
+				}
+			}
+		}
+		return chess.generateNullDelta()
 	})
 
 	ipcMain.handle('chess:index-to-algebraic', async (
