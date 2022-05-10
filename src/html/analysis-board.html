@@ -9,16 +9,62 @@
 	<link rel="stylesheet" type="text/css" href="../css/board-themes/main-theme.css">
 	<title>Test</title>
 </head>
-<body id="analysis-grid" class="mainTheme">
+<body id="analysis-grid" class="neutral">
 	<div id="board">
-		<div id="board-grid">
+	</div>
+	<div id="board-status" class="emph1">
+		<div id="thread-container" class="off2">
+			<p>thread info goes here.</p>
+		</div>
+		<div id="engine-container" class="off1">
+			<p>engine info goes</p>
+		</div>
+		<div id="game-history" class="emph1">
+			<p>Game history goes here.</p>
 		</div>
 	</div>
-	<div id="board-status" class="emphTheme1">
-		<p>Game history goes here.</p>
-	</div>
-	<div id="board-analysis" class="offTheme1">
-		<p>Game analysis goes here.</p>
+	<div id="board-analysis" class="emph2">
+		<div class="analysisElement">
+			<div class="analysisDepth analysisLabel">
+				<p>Depth</p>
+			</div>
+			<div class="analysisTime analysisLabel">
+				<p>Eval Time</p>
+			</div>
+			<div class="analysisNodes analysisLabel">
+				<p>Nodes</p>
+			</div>
+			<div class="analysisNPS analysisLabel">
+				<p>Nodes/Sec</p>
+			</div>
+			<div class="analysisEval analysisLabel">
+				<p>Evaluation</p>
+			</div>
+			<div class="analysisLine analysisLabel">
+				<p>Line</p>
+			</div>
+		</div>
+		<div class="analysisElement">
+			<div class="analysisDepth">
+				<p>10/20</p>
+			</div>
+			<div class="analysisTime">
+				<p>8:30</p>
+			</div>
+			<div class="analysisNodes">
+				<p>4.5M</p>
+			</div>
+			<div class="analysisNPS">
+				<p>3.8M</p>
+			</div>
+			<div class="analysisEval">
+				<p>+0.15</p>
+			</div>
+			<div class="analysisLine">
+				<p>Qe3 bg4</p>
+			</div>
+		</div>
+		<!-- <p>Game analysis goes here.</p> -->
 	</div>
 
 	<script src="../dist/analysis-board/renderer.js"></script>

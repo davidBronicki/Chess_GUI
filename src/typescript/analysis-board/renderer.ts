@@ -4,13 +4,27 @@ var squareElementArray: HTMLElement[] = []
 var indicatedSquares: HTMLElement[] = []
 var selectedSquare = -1
 
-window.addEventListener('DOMContentLoaded', initBoard)
-window.addEventListener('resize', resquare)
+window.addEventListener('DOMContentLoaded', handleDomLoaded)
+window.addEventListener('resize', handleResize)
+
+function initAnalysis(){
+	let analysis = window.document.getElementById('board-analysis')
+}
+
+
+function initStatus(){
+	// let status = window.document.getElementById('board-status')
+	// let gameHistory = window.document.createElement('div')
+	// gameHistory.id = 'game-history'
+}
+
 
 function initBoard(){
-	window.chess = window.parent.parent.chess
-
-	let boardDiv = window.document.getElementById('board-grid')
+	let board = window.document.getElementById('board')
+	let boardDiv = window.document.createElement('div')
+	boardDiv.id = 'board-grid'
+	boardDiv.className = 'emphTheme1'
+	board.appendChild(boardDiv)
 	for (let j = 0; j < 8; j++){
 		for (let i = 0; i < 8; i++){
 			let newDiv = window.document.createElement('div')
@@ -54,7 +68,7 @@ function resetIndicators(){
 		let index = squareElementArray.findIndex((
 			value: HTMLElement
 		) => {
-			return value === indicatingSquare
+			return value.id === indicatingSquare.id
 		})
 		if (indicatingSquare.firstChild){
 			setClickHandleByIndex(index, handleOccupiedClickEvent)
@@ -156,6 +170,16 @@ function setSquare(square: number, pieceName: string){
 	newElement.src = sourceFile
 	squareElementArray[square].appendChild(newElement)
 	setClickHandleByIndex(square, handleOccupiedClickEvent)
+}
+function handleResize(){
+	resquare()
+}
+
+function handleDomLoaded(){
+	window.chess = window.parent.parent.chess
+	initBoard()
+	initAnalysis()
+	initStatus()
 }
 
 function removeAllChildNodes(parent: Node) {

@@ -1,7 +1,7 @@
 
 #analysis-grid {
-	/* width: 100%;
-	height: 100%; */
+	width: 100%;
+	height: 100%;
 	display: grid;
 	overflow: hidden;
 	grid-template-columns: minmax(0, 1fr) 250px;
@@ -9,11 +9,28 @@
 }
 
 #board-status {
+	display: flex;
+	flex-direction: column;
 	grid-area: 1 / 2 / 2 / 3;
 }
 
 #board-analysis {
 	grid-area: 2 / 1 / 3 / 3;
+}
+.analysisElement {
+	width: 100%;
+	display: grid;
+	grid-template-columns: 10% 12% 15% 15% 15% 33%;
+	grid-template-rows: 1fr;
+}
+.analysisElement > div:not(:last-child) {
+	border-right: 1px solid rgb(81, 76, 113);
+}
+.analysisElement > div {
+	border-bottom: 1px solid rgb(81, 76, 113);
+}
+.analysisLabel > p {
+	text-align: center;
 }
 
 #board {
@@ -22,6 +39,19 @@
 	justify-content: center;
 	align-items: center;
 }
+
+
+#thread-container {
+	height: 20%;
+}
+#engine-container {
+	height: 30%
+}
+#game-history {
+	height: 50%;
+}
+
+
 
 #board-grid {
 	display: grid;
